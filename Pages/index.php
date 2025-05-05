@@ -1,12 +1,24 @@
 <?php
 // ONCE = en gång även om det blir cirkelreferenser
 #include_once("Models/Products.php") - OK även om filen inte finns
+
+
+
+
 require_once("Models/Product.php");
 require_once("components/Footer.php");
 require_once("Models/Database.php");
 
 $dbContext = new Database();
 
+
+// POPULÄRA PRODUKTER - product 1 to many reviews text+betyg
+// Vi gör enkelt : i products skapar vi PopularityFactor som är en int mellan 1-100
+// ju högre ju mer populär
+
+// På startsidan så visas de 10 mest populära produkterna
+// Skapa en  getPopularProducts() i Database.php som returnerar en array av produkter
+// select * from products order by popularityFactor desc limit 10	
 
 ?>
 
@@ -29,7 +41,7 @@ $dbContext = new Database();
         <!-- Navigation-->
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <div class="container px-4 px-lg-5">
-                <a class="navbar-brand" href="/">Adrian Shoppen</a>
+                <a class="navbar-brand" href="/">SuperShoppen</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
@@ -58,7 +70,6 @@ $dbContext = new Database();
 
                      <form action="/search" method="GET">
                         <input type="text" name="q" placeholder="Search" class="form-control">
-                        <button class="btn btn-outline-dark" type="submit">Search</button>
                      </form>   
 
 
@@ -80,8 +91,8 @@ $dbContext = new Database();
         <header class="bg-dark py-5">
             <div class="container px-4 px-lg-5 my-5">
                 <div class="text-center text-white">
-                    <h1 class="display-4 fw-bolder">Adrian Shoppen</h1>
-                    <p class="lead fw-normal text-white-50 mb-0">Hitta all frukt & grönt du kan tänka dig!</p>
+                    <h1 class="display-4 fw-bolder">Super shoppen</h1>
+                    <p class="lead fw-normal text-white-50 mb-0">Handla massa onödigt hos oss!</p>
                 </div>
             </div>
         </header>
@@ -90,7 +101,7 @@ $dbContext = new Database();
             <div class="container px-4 px-lg-5 mt-5">
                 <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
                 <?php 
-                foreach($dbContext->getAllProducts() as $prod){
+                foreach($dbContext->getPopularProducts() as $prod){
                 ?>                    
                     <div class="col mb-5">
                             <div class="card h-100">

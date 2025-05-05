@@ -1,20 +1,24 @@
 <?php
 require 'vendor/autoload.php';
 
-class UserDatabase {
-    private $pdo;
-    private $auth;
+class UserDatabase
+{
+  private $pdo;
+  private $auth;
 
-    function getAuth(){
-      return $this->auth;
-    }
-    function __construct($pdo) {
-        $this->pdo = $pdo;
-        $this->auth = new \Delight\Auth\Auth($pdo);
-    }
+  function getAuth()
+  {
+    return $this->auth;
+  }
+  function __construct($pdo)
+  {
+    $this->pdo = $pdo;
+    $this->auth = new \Delight\Auth\Auth($pdo);
+  }
 
-    function setupUsers(){
-        $sql = "
+  function setupUsers()
+  {
+    $sql = "
         -- PHP-Auth (https://github.com/delight-im/PHP-Auth)
         -- Copyright (c) delight.im (https://www.delight.im/)
         -- Licensed under the MIT License (https://opensource.org/licenses/MIT)
@@ -87,17 +91,18 @@ class UserDatabase {
         /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
         /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
         /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;";
-        $this->pdo->exec($sql);
+    $this->pdo->exec($sql);
+  }
+
+
+
+  function seedUsers()
+  {
+    if ($this->pdo->query("select * from users where email='stefan.holmberg@systementor.se'")->rowCount() == 0) {
+      $userId = $this->auth->admin()->createUser("stefan.holmberg@systementor.se", "Hejsan123#", "stefan.holmberg@systementor.se");
     }
-    
-    
-    
-    function seedUsers(){
-        if($this->pdo->query("select * from users where email='stefan.holmberg@systementor.se'")->rowCount() == 0){
-            $userId = $this->auth->admin()->createUser("stefan.holmberg@systementor.se", "Hejsan123#", "stefan.holmberg@systementor.se");    
-        }
-    }
-    
+  }
+
 }
 
 

@@ -1,6 +1,7 @@
 <?php
 
 require_once('Models/UserDatabase.php');
+require_once("vendor/autoload.php");
 
 // Hur kan man strukturera klasser
 // Hir kan man struktirera filer? Folders + subfolders
@@ -37,39 +38,57 @@ class Database
         $dsn = "mysql:host=$host:$port;dbname=$db"; // connection string
         $this->pdo = new PDO($dsn, $user, $pass);
         $this->initDatabase();
+        $this->modifyDatabase();
         $this->initData();
         $this->usersDatabase = new UserDatabase($this->pdo);
         $this->usersDatabase->setupUsers();
         $this->usersDatabase->seedUsers();
     }
 
-    function addProductIfNotExists($title, $price, $stockLevel, $categoryName)
+    function addProductIfNotExists($title, $price, $stockLevel, $categoryName, $popularityFactor)
     {
         $query = $this->pdo->prepare("SELECT * FROM Products WHERE title = :title");
         $query->execute(['title' => $title]);
         if ($query->rowCount() == 0) {
-            $this->insertProduct($title, $stockLevel, $price, $categoryName);
+            $this->insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor);
         }
     }
 
 
     function initData()
     {
-        $this->addProductIfNotExists("Banana", 10, 100, "Fruit");
-        $this->addProductIfNotExists("Apple", 5, 50, "Fruit");
-        $this->addProductIfNotExists("Pear", 7, 70, "Fruit");
-        $this->addProductIfNotExists("Cucumber", 15, 30, "Vegetable");
-        $this->addProductIfNotExists("Tomato", 20, 40, "Vegetable");
-        $this->addProductIfNotExists("Carrot", 10, 20, "Vegetable");
-        $this->addProductIfNotExists("Potato", 5, 50, "Vegetable");
-        $this->addProductIfNotExists("Onion", 7, 70, "Vegetable");
-        $this->addProductIfNotExists("Lettuce", 15, 30, "Vegetable");
-        $this->addProductIfNotExists("Broccoli", 20, 40, "Vegetable");
-        $this->addProductIfNotExists("Spinach", 10, 20, "Vegetable");
-        $this->addProductIfNotExists("Zucchini", 5, 50, "Vegetable");
-        $this->addProductIfNotExists("Eggplant", 7, 70, "Vegetable");
-        $this->addProductIfNotExists("Bell Pepper", 15, 30, "Vegetable");
-        $this->addProductIfNotExists("Pinapple", 18, 20, "Fruit");
+        $sql = "SELECT COUNT(*) FROM Products";
+        $res = $this->pdo->query($sql);
+        $count = $res->fetchColumn();
+        if ($count > 0) {
+            return;
+        }
+        $faker = \Faker\Factory::create();
+        $faker->addProvider(new \Bezhanov\Faker\Provider\Commerce($faker));
+
+        for ($i = 0; $i < 100; $i++) {
+            $title = $faker->productName();
+            $price = $faker->numberBetween(1, 100);
+            $stockLevel = $faker->numberBetween(1, 100);
+            $categoryName = $faker->category();
+            $popularityFactor = $faker->numberBetween(1, 100);
+            $this->addProductIfNotExists($title, $price, $stockLevel, $categoryName, $popularityFactor);
+        }
+    }
+
+    function columnExists($pdo, $table, $column)
+    {
+        $stmt = $pdo->prepare("SHOW COLUMNS FROM $table WHERE  field = :column");
+        $stmt->execute(['column' => $column]);
+        return $stmt->rowCount() > 0;
+    }
+
+    function modifyDatabase()
+    {
+        if ($this->columnExists($this->pdo, 'Products', 'color')) {
+            return;
+        }
+        $this->pdo->query('ALTER TABLE Products ADD COLUMN color varchar(20) DEFAULT NULL');
     }
 
     function initDatabase()
@@ -79,8 +98,9 @@ class Database
                 title VARCHAR(50),
                 price INT,
                 stockLevel INT,
-                categoryName VARCHAR(50)
-            )');
+                categoryName VARCHAR(50),
+                popularityFactor INT DEFAULT 0            
+                )');
     }
 
     function getProduct($id)
@@ -94,14 +114,15 @@ class Database
     function updateProduct($product)
     {
         $s = "UPDATE Products SET title = :title," .
-            " price = :price, stockLevel = :stockLevel, categoryName = :categoryName WHERE id = :id";
+            " price = :price, stockLevel = :stockLevel, categoryName = :categoryName, popularityFactor=:popularityFactor WHERE id = :id";
         $query = $this->pdo->prepare($s);
         $query->execute([
             'title' => $product->title,
             'price' => $product->price,
             'stockLevel' => $product->stockLevel,
             'categoryName' => $product->categoryName,
-            'id' => $product->id
+            'id' => $product->id,
+            'popularityFactor' => $product->popularityFactor
         ]);
     }
 
@@ -111,32 +132,69 @@ class Database
         $query->execute(['id' => $id]);
     }
 
-    function insertProduct($title, $stockLevel, $price, $categoryName)
+    function insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor)
     {
-        $sql = "INSERT INTO Products (title, price, stockLevel, categoryName) VALUES (:title, :price, :stockLevel, :categoryName)";
+        $sql = "INSERT INTO Products (title, price, stockLevel, categoryName, popularityFactor) VALUES (:title, :price, :stockLevel, :categoryName, :popularityFactor)";
         $query = $this->pdo->prepare($sql);
         $query->execute([
             'title' => $title,
             'price' => $price,
             'stockLevel' => $stockLevel,
-            'categoryName' => $categoryName
+            'categoryName' => $categoryName,
+            'popularityFactor' => $popularityFactor
         ]);
     }
 
 
-    function searchProducts($q, $sortCol, $sortOrder)
-    {
-        if (!in_array($sortCol, ["title", "price"])) {
+    function searchProducts($q, $sortCol, $sortOrder, $pageNo, $pageSize = 10)
+    { // $q = oo
+        if (!in_array($sortCol, ["title", "price"])) { // title123312132312321
             $sortCol = "title";
         }
         if (!in_array($sortOrder, ["asc", "desc"])) {
             $sortOrder = "asc";
         }
 
-        $query = $this->pdo->prepare("SELECT * FROM Products WHERE title LIKE :q or categoryName like :q ORDER BY $sortCol $sortOrder"); // Products är TABELL
+        $sqlProducts = "SELECT * FROM Products WHERE title LIKE :q OR categoryName LIKE :q ORDER BY $sortCol $sortOrder";
+        $sqlCount = str_replace("SELECT * FROM ", "SELECT CEIL (COUNT(*)/$pageSize) FROM ", $sqlProducts);
+
+        // LIMIT 
+        $offset = ($pageNo - 1) * $pageSize; // START POSITIONEN
+
+        // $sqlProducts = $sqlProducts +  " LIMIT $offset, $pageSize"; // LIMIT 0, 10
+        // $sqlProducts +=  " LIMIT $offset, $pageSize"; // LIMIT 0, 10
+        //$sqlProducts =   $sqlProducts . " LIMIT $offset, $pageSize"; // LIMIT 0, 10
+        $sqlProducts .= " LIMIT $offset, $pageSize"; // LIMIT 0, 10
+
+        $query = $this->pdo->prepare($sqlProducts); // Products är TABELL
         $query->execute(['q' => "%$q%"]);
-        return $query->fetchAll(PDO::FETCH_CLASS, 'Product');
+        $data = $query->fetchAll(PDO::FETCH_CLASS, 'Product'); // $data  innehåller alla produkter som matchar sökningen
+
+
+        $query = $this->pdo->prepare($sqlCount); // Products är TABELL
+        $query->execute(['q' => "%$q%"]);
+        $num_pages = $query->fetchColumn();   // $num_pages  innehåller antalet sidor som finns i databasen
+
+        // arrayen["data"] istf // arrayen[0]
+        return ["data" => $data, "num_pages" => $num_pages]; // returnerar en array med två element: $data och $num_pages
     }
+
+    // Vad är en array?
+    // en array är en samling av värden
+    // värdena når vi genom indexnummer 
+    // $players[0] 
+    // $players[1] 
+
+    // Vad är en associativ array? (dictionaries i Python, maps)
+    // en associativ array är en samling av värden
+    // värdena når vi genom NAMN (keys) 
+    // $players['forward'] 
+    // $players['goalie'] 
+
+
+    // $result = $this->searchProducts($q,$sortCol, $sortOrder,$pageNo,$pageSize); // $result är en array med två element: $data och $num_pages
+    // $data = $result[0]; // $data innehåller alla produkter som matchar sökningen    
+    // $num_pages = $result[1]; // $num_pages innehåller antalet sidor som finns i databasen
 
 
     //function getAllProducts($sortCol, $sortOrder){
@@ -151,6 +209,11 @@ class Database
 
         // SELECT * FROM Products ORDER BY  id asc
         $query = $this->pdo->query("SELECT * FROM Products ORDER BY $sortCol $sortOrder"); // Products är TABELL 
+        return $query->fetchAll(PDO::FETCH_CLASS, 'Product'); // Product är PHP Klass
+    }
+    function getPopularProducts()
+    {
+        $query = $this->pdo->query("SELECT * FROM Products ORDER BY popularityFactor DESC LIMIT 10"); // Products är TABELL 
         return $query->fetchAll(PDO::FETCH_CLASS, 'Product'); // Product är PHP Klass
     }
 
