@@ -58,7 +58,7 @@ $cart = new Cart($dbContext, $session_id, $userId);
     <!-- Navigation-->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container px-4 px-lg-5">
-            <a class="navbar-brand" href="/">SuperShoppen</a>
+            <a class="navbar-brand" href="/">Fruit Life</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
                 aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
@@ -85,7 +85,7 @@ $cart = new Cart($dbContext, $session_id, $userId);
                     <?php } else { ?>
                         <li class="nav-item"><a class="nav-link" href="/user/login">Login</a></li>
                         <li class="nav-item"><a class="nav-link" href="/user/register">Create account</a></li>
-                    <?php
+                        <?php
                     }
                     ?>
                 </ul>
@@ -113,8 +113,7 @@ $cart = new Cart($dbContext, $session_id, $userId);
     <header class="bg-dark py-5">
         <div class="container px-4 px-lg-5 my-5">
             <div class="text-center text-white">
-                <h1 class="display-4 fw-bolder">Din cart</h1>
-                <p class="lead fw-normal text-white-50 mb-0">...</p>
+                <h1 class="display-4 fw-bolder">Your cart</h1>
             </div>
         </div>
     </header>
@@ -128,7 +127,7 @@ $cart = new Cart($dbContext, $session_id, $userId);
                             <th scope="col">Product</th>
                             <th scope="col">Quantity</th>
                             <th scope="col">Price</th>
-                            <th scope="col">Row Price</th>
+                            <th scope="col">Total Price</th>
                             <th scope="col"></th>
                         </tr>
                     </thead>
@@ -151,8 +150,7 @@ $cart = new Cart($dbContext, $session_id, $userId);
                                     <?php echo $item->rowPrice; ?>
                                 </td>
                                 <td>
-                                    <a href="javascript:addToCart(<?php echo $item->productId; ?>, true)"
-                                        class="btn btn-info">PLUS JS</a>
+
 
                                     <a href="/addToCart?productId=<?php echo $item->productId ?>&fromPage=<?php echo urlencode((empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]") ?>"
                                         class="btn btn-primary">+</a>

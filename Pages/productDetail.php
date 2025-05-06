@@ -4,6 +4,8 @@ require_once(__DIR__ . "/../Models/Cart.php");
 require_once(__DIR__ . "/../Models/Product.php");
 require_once(__DIR__ . "/../components/Footer.php");
 
+session_start();
+
 $db = new Database();
 
 $productId = $_GET['id'] ?? null;
@@ -18,6 +20,12 @@ $product = $db->getProduct($productId);
 if (!$product) {
     echo "Produkten hittades inte.";
     exit;
+}
+
+// Bildhantering: sätt bild med fallback
+$image = '/assets/images/default.jpg';
+if (!empty($product->image_url)) {
+    $image = '/' . ltrim($product->image_url, '/');
 }
 
 $session_id = session_id();
@@ -98,7 +106,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         </div>
     </nav>
 
-    <!-- Product detail content -->
     <div class="container py-5">
         <?php if (isset($message)): ?>
             <div class="alert alert-success"><?php echo $message; ?></div>
@@ -106,23 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 
         <div class="row align-items-center">
             <div class="col-md-6 text-center mb-4 mb-md-0">
-                <?php
-                // 1. Fallback till default om image_url är tom
-                $image = !empty($product->image_url) ? $product->image_url : '/assets/images/default.jpg';
-
-                // 2. Kontrollera om filen faktiskt existerar på servern
-                $localPath = $_SERVER['DOCUMENT_ROOT'] . $image;
-                if (!file_exists($localPath)) {
-                    $image = '/assets/images/default.jpg';
-                }
-                ?>
-
                 <img src="<?php echo htmlspecialchars($image); ?>"
                     alt="<?php echo htmlspecialchars($product->title); ?>" class="img-fluid rounded shadow"
                     style="max-height: 500px;">
-
-
-
             </div>
 
             <div class="col-md-6">
@@ -139,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                 <form method="POST" class="mt-4">
                     <input type="hidden" name="add_to_cart" value="1">
                     <button type="submit" class="btn btn-success btn-lg" <?php echo ((int) $product->stockLevel <= 0) ? 'disabled' : ''; ?>>
-                        Add to cart
+                        <?php echo ((int) $product->stockLevel <= 0) ? 'Out of stock' : 'Add to cart'; ?>
                     </button>
                 </form>
 

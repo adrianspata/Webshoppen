@@ -95,17 +95,15 @@ $cart = new Cart($dbContext, $session_id, $userId);
 
 
                 <?php if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()) { ?>
-                    Current user: <?php echo $dbContext->getUsersDatabase()->getAuth()->getUsername() ?>
-                    Current user: <?php echo $dbContext->getUsersDatabase()->getAuth()->getUsername() ?>
+                    Welcome: <?php echo $dbContext->getUsersDatabase()->getAuth()->getUsername() ?>
                 <?php } ?>
                 <form class="d-flex">
                     <a class="btn btn-outline-dark" href="/viewCart">
-                        <a class="btn btn-outline-dark" type="submit">
-                            <i class="bi-cart-fill me-1"></i>
-                            Cart
-                            <span id="cartCount" class="badge bg-dark text-white ms-1 rounded-pill">
-                                <?php echo $cart->getItemsCount() ?></span>
-                        </a>
+                        <i class="bi-cart-fill me-1"></i>
+                        Cart
+                        <span id="cartCount" class="badge bg-dark text-white ms-1 rounded-pill">
+                            <?php echo $cart->getItemsCount() ?></span>
+                    </a>
                 </form>
             </div>
         </div>

@@ -146,8 +146,12 @@ class Database
         $query->execute(['id' => $id]);
     }
 
-    function insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor, $image_url = '/assets/default.jpg')
+    function insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor, $image_url = null)
     {
+        if (empty($image_url)) {
+            $image_url = '/assets/images/default.jpg'; // 🔁 sätt standardbild om ingen bild anges
+        }
+
         $sql = "INSERT INTO Products (title, price, stockLevel, categoryName, popularityFactor, image_url)
             VALUES (:title, :price, :stockLevel, :categoryName, :popularityFactor, :image_url)";
         $query = $this->pdo->prepare($sql);
@@ -160,6 +164,7 @@ class Database
             'image_url' => $image_url
         ]);
     }
+
 
 
 
@@ -255,17 +260,73 @@ class Database
 
     function getCartItems($sessionId, $userId = null)
     {
-        $queryStr = "SELECT * FROM Cart WHERE sessionId = :sessionId";
+        $queryStr = "SELECT c.productId, c.quantity, p.title AS productName, p.price AS productPrice, (p.price * c.quantity) AS rowPrice
+                 FROM Cart c
+                 JOIN Products p ON c.productId = p.id
+                 WHERE c.sessionId = :sessionId";
+
         $params = ['sessionId' => $sessionId];
 
         if ($userId !== null) {
-            $queryStr .= " OR userId = :userId";
+            $queryStr .= " OR c.userId = :userId";
             $params['userId'] = $userId;
         }
 
         $query = $this->pdo->prepare($queryStr);
         $query->execute($params);
-        return $query->fetchAll(PDO::FETCH_ASSOC);
+
+        // ✅ returnera resultatet som CartItem-objekt
+        return $query->fetchAll(PDO::FETCH_CLASS, 'CartItem');
+    }
+
+
+    public function updateCartItem($userId, $sessionId, $productId, $quantity)
+    {
+        // Antingen måste userId eller sessionId vara satt
+        if (!$userId && !$sessionId) {
+            throw new Exception("Varken userId eller sessionId är angivet.");
+        }
+
+        // Skapa SQL beroende på om användaren är inloggad eller gäst
+        if ($userId) {
+            $stmt = $this->pdo->prepare("
+                UPDATE cart_items 
+                SET quantity = ? 
+                WHERE user_id = ? AND product_id = ?
+            ");
+            return $stmt->execute([$quantity, $userId, $productId]);
+        } else {
+            $stmt = $this->pdo->prepare("
+                UPDATE cart_items 
+                SET quantity = ? 
+                WHERE session_id = ? AND product_id = ?
+            ");
+            return $stmt->execute([$quantity, $sessionId, $productId]);
+        }
+    }
+
+    public function addOrUpdateCartItem($userId, $sessionId, $productId, $quantity)
+    {
+        // Försök uppdatera först
+        if ($userId) {
+            $stmt = $this->pdo->prepare("UPDATE Cart SET quantity = ? WHERE userId = ? AND productId = ?");
+            $stmt->execute([$quantity, $userId, $productId]);
+
+            if ($stmt->rowCount() === 0) {
+                // Ingen rad uppdaterades – lägg till
+                $stmt = $this->pdo->prepare("INSERT INTO Cart (userId, productId, quantity) VALUES (?, ?, ?)");
+                $stmt->execute([$userId, $productId, $quantity]);
+            }
+        } else {
+            $stmt = $this->pdo->prepare("UPDATE Cart SET quantity = ? WHERE sessionId = ? AND productId = ?");
+            $stmt->execute([$quantity, $sessionId, $productId]);
+
+            if ($stmt->rowCount() === 0) {
+                // Ingen rad uppdaterades – lägg till
+                $stmt = $this->pdo->prepare("INSERT INTO Cart (sessionId, productId, quantity) VALUES (?, ?, ?)");
+                $stmt->execute([$sessionId, $productId, $quantity]);
+            }
+        }
     }
 
 }

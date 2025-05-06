@@ -12,11 +12,9 @@ if ($db->getUsersDatabase()->getAuth()->isLoggedIn()) {
 }
 
 $productId = $_GET['productId'] ?? null;
-$removeCount = $_GET['removeCount'] ?? 1;
-
 if ($productId) {
     $cart = new Cart($db, $sessionId, $userId);
-    $cart->removeItem($productId, (int) $removeCount);
+    $cart->addItem($productId, 1);
 }
 
 $redirect = $_GET['fromPage'] ?? '/';

@@ -11,6 +11,5 @@ class CartItem
     public $rowPrice;
     public $image_url;
 }
-;
 
 ?>
