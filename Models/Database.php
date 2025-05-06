@@ -1,7 +1,8 @@
 <?php
 
-require_once('Models/UserDatabase.php');
-require_once("vendor/autoload.php");
+require_once(__DIR__ . '/UserDatabase.php');
+require_once(__DIR__ . '/../vendor/autoload.php');
+require_once(__DIR__ . '/Product.php');
 
 // Hur kan man strukturera klasser
 // Hir kan man struktirera filer? Folders + subfolders
@@ -50,9 +51,11 @@ class Database
         $query = $this->pdo->prepare("SELECT * FROM Products WHERE title = :title");
         $query->execute(['title' => $title]);
         if ($query->rowCount() == 0) {
-            $this->insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor);
+            $image_url = '/assets/images/default.jpg'; // lägg till detta
+            $this->insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor, $image_url);
         }
     }
+
 
 
     function initData()
@@ -93,15 +96,26 @@ class Database
 
     function initDatabase()
     {
+        // Skapa Products-tabellen
         $this->pdo->query('CREATE TABLE IF NOT EXISTS Products (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                title VARCHAR(50),
-                price INT,
-                stockLevel INT,
-                categoryName VARCHAR(50),
-                popularityFactor INT DEFAULT 0            
-                )');
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(50),
+            price INT,
+            stockLevel INT,
+            categoryName VARCHAR(50),
+            popularityFactor INT DEFAULT 0            
+        )');
+
+        // Skapa Cart-tabellen
+        $this->pdo->query('CREATE TABLE IF NOT EXISTS Cart (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            productId INT,
+            sessionId VARCHAR(255),
+            userId INT DEFAULT NULL,
+            quantity INT DEFAULT 1
+        )');
     }
+
 
     function getProduct($id)
     {
@@ -132,18 +146,23 @@ class Database
         $query->execute(['id' => $id]);
     }
 
-    function insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor)
+    function insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor, $image_url = '/assets/default.jpg')
     {
-        $sql = "INSERT INTO Products (title, price, stockLevel, categoryName, popularityFactor) VALUES (:title, :price, :stockLevel, :categoryName, :popularityFactor)";
+        $sql = "INSERT INTO Products (title, price, stockLevel, categoryName, popularityFactor, image_url)
+            VALUES (:title, :price, :stockLevel, :categoryName, :popularityFactor, :image_url)";
         $query = $this->pdo->prepare($sql);
         $query->execute([
             'title' => $title,
             'price' => $price,
             'stockLevel' => $stockLevel,
             'categoryName' => $categoryName,
-            'popularityFactor' => $popularityFactor
+            'popularityFactor' => $popularityFactor,
+            'image_url' => $image_url
         ]);
     }
+
+
+
 
 
     function searchProducts($q, $sortCol, $sortOrder, $pageNo, $pageSize = 10)
@@ -232,6 +251,21 @@ class Database
         // SELECT DISTINCT categoryName FROM Products
         $data = $this->pdo->query('SELECT DISTINCT categoryName FROM Products')->fetchAll(PDO::FETCH_COLUMN);
         return $data;
+    }
+
+    function getCartItems($sessionId, $userId = null)
+    {
+        $queryStr = "SELECT * FROM Cart WHERE sessionId = :sessionId";
+        $params = ['sessionId' => $sessionId];
+
+        if ($userId !== null) {
+            $queryStr .= " OR userId = :userId";
+            $params['userId'] = $userId;
+        }
+
+        $query = $this->pdo->prepare($queryStr);
+        $query->execute($params);
+        return $query->fetchAll(PDO::FETCH_ASSOC);
     }
 
 }

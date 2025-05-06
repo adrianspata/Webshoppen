@@ -4,18 +4,27 @@ require_once("components/Footer.php");
 require_once('Models/Database.php');
 
 $dbContext = new Database();
-// Hämta den produkt med detta ID
-
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Här kommer vi när man har tryckt  på SUBMIT
-    // IMORGON TISDAG SÅ UPDATE PRODUCT SET title = $_POST['title'] WHERE id = $id
     $title = $_POST['title'];
     $stockLevel = $_POST['stockLevel'];
     $price = $_POST['price'];
     $categoryName = $_POST['categoryName'];
     $popularityFactor = $_POST['popularityFactor'];
-    $dbContext->insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor);
+
+    // Hantera filuppladdning
+    $image_url = '/assets/images/default.jpg';
+    if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = __DIR__ . '/../assets/images/';
+        $filename = basename($_FILES['product_image']['name']);
+        $targetPath = $uploadDir . $filename;
+
+        if (move_uploaded_file($_FILES['product_image']['tmp_name'], $targetPath)) {
+            $image_url = '/assets/images/' . $filename;
+        }
+    }
+
+    $dbContext->insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor, $image_url);
     header("Location: /admin/products");
     exit;
 } else {
@@ -47,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container px-4 px-lg-5">
-            <a class="navbar-brand" href="/">SuperShoppen</a>
+            <a class="navbar-brand" href="/">Fruit Life</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
                 aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
@@ -87,30 +96,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 
 
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="title">Title</label>
-                    <input type="text" class="form-control" name="title" value="">
+                    <input type="text" class="form-control" name="title" required>
                 </div>
                 <div class="form-group">
                     <label for="price">Price</label>
-                    <input type="text" class="form-control" name="price" value="">
+                    <input type="text" class="form-control" name="price" required>
                 </div>
                 <div class="form-group">
                     <label for="stockLevel">Stock</label>
-                    <input type="text" class="form-control" name="stockLevel" value="">
+                    <input type="text" class="form-control" name="stockLevel" required>
                 </div>
                 <div class="form-group">
-                    <label for="categpryName">Category name:</label>
-                    <input type="text" class="form-control" name="categoryName" value="">
+                    <label for="categoryName">Category name</label>
+                    <input type="text" class="form-control" name="categoryName" required>
                 </div>
                 <div class="form-group">
                     <label for="popularityFactor">Popularity factor</label>
                     <input type="number" class="form-control" name="popularityFactor" value="0">
                 </div>
+                <div class="form-group">
+                    <label for="product_image">Product Image</label>
+                    <input type="file" class="form-control" name="product_image" accept="image/*">
+                </div>
 
-                <input type="submit" class="btn btn-primary" value="Skapa">
+                <input type="submit" class="btn btn-primary mt-3" value="Add product">
             </form>
+
         </div>
     </section>
 

@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container px-4 px-lg-5">
-            <a class="navbar-brand" href="/">SuperShoppen</a>
+            <a class="navbar-brand" href="/">Fruit Life</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
                 aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
@@ -69,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 echo "<li><a class='dropdown-item' href='#!'>$cat</a></li>";
                             }
                             ?>
-                            <li><a class="dropdown-item" href="#!">En cat</a></li>
                         </ul>
                     </li>
                     <li class="nav-item"><a class="nav-link" href="#!">Login</a></li>

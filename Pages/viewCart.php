@@ -8,9 +8,8 @@
 require_once("Models/Product.php");
 require_once("components/Footer.php");
 require_once("Models/Database.php");
-require_once(__DIR__ . "/../Models/Cart.php");
-
-
+require_once("Models/Cart.php");
+require_once("components/SingleProduct.php");
 
 $dbContext = new Database();
 
@@ -24,6 +23,8 @@ if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()) {
 $session_id = session_id();
 
 $cart = new Cart($dbContext, $session_id, $userId);
+
+
 
 
 // POPULÄRA PRODUKTER - product 1 to many reviews text+betyg
@@ -57,7 +58,7 @@ $cart = new Cart($dbContext, $session_id, $userId);
     <!-- Navigation-->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container px-4 px-lg-5">
-            <a class="navbar-brand" href="/">Fruit Life</a>
+            <a class="navbar-brand" href="/">SuperShoppen</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
                 aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
@@ -72,8 +73,8 @@ $cart = new Cart($dbContext, $session_id, $userId);
                                 <hr class="dropdown-divider" />
                             </li>
                             <?php
-                            foreach ($dbContext->getAllCategories() as $cat) {
-                                echo "<li><a class='dropdown-item' href='/category?catname=$cat'>$cat</a></li>";
+                            foreach ($dbContext->getAllCategories() as $category) {
+                                echo "<li><a class='dropdown-item' href='/category?id=$category->id'>$category->name</a></li>";
                             }
                             ?>
                         </ul>
@@ -84,7 +85,7 @@ $cart = new Cart($dbContext, $session_id, $userId);
                     <?php } else { ?>
                         <li class="nav-item"><a class="nav-link" href="/user/login">Login</a></li>
                         <li class="nav-item"><a class="nav-link" href="/user/register">Create account</a></li>
-                        <?php
+                    <?php
                     }
                     ?>
                 </ul>
@@ -96,16 +97,14 @@ $cart = new Cart($dbContext, $session_id, $userId);
 
                 <?php if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()) { ?>
                     Current user: <?php echo $dbContext->getUsersDatabase()->getAuth()->getUsername() ?>
-                    Current user: <?php echo $dbContext->getUsersDatabase()->getAuth()->getUsername() ?>
                 <?php } ?>
                 <form class="d-flex">
                     <a class="btn btn-outline-dark" href="/viewCart">
-                        <a class="btn btn-outline-dark" type="submit">
-                            <i class="bi-cart-fill me-1"></i>
-                            Cart
-                            <span id="cartCount" class="badge bg-dark text-white ms-1 rounded-pill">
-                                <?php echo $cart->getItemsCount() ?></span>
-                        </a>
+                        <i class="bi-cart-fill me-1"></i>
+                        Cart
+                        <span id="cartCount"
+                            class="badge bg-dark text-white ms-1 rounded-pill"><?php echo $cart->getItemsCount() ?></span>
+                    </a>
                 </form>
             </div>
         </div>
@@ -114,56 +113,70 @@ $cart = new Cart($dbContext, $session_id, $userId);
     <header class="bg-dark py-5">
         <div class="container px-4 px-lg-5 my-5">
             <div class="text-center text-white">
-                <h1 class="display-4 fw-bolder">Fruit Life</h1>
-                <p class="lead fw-normal text-white-50 mb-0">We have all your favourite fruits!</p>
+                <h1 class="display-4 fw-bolder">Din cart</h1>
+                <p class="lead fw-normal text-white-50 mb-0">...</p>
             </div>
         </div>
     </header>
     <!-- Section-->
     <section class="py-5">
         <div class="container px-4 px-lg-5 mt-5">
-
-            <!-- Sektionstitel -->
-            <div class="text-center mb-5">
-                <h2 class="fw-bolder">Most Popular Products</h2>
-                <p class="text-muted">These top picks are loved by our customers</p>
-            </div>
-
             <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
-                <?php
-                foreach ($dbContext->getPopularProducts() as $prod) {
-                    ?>
-                    <div class="col mb-5">
-                        <div class="card h-100 position-relative">
-                            <a href="/Pages/productDetail.php?id=<?php echo $prod->id; ?>" class="stretched-link"></a>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Product</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Row Price</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartItemsTable">
+                        <?php foreach ($cart->getItems() as $item) {
+                            ?>
+                            <tr>
+                                <td>
+                                    <?php echo $item->productName; ?>
+                                </td>
+                                <td>
+                                    <?php echo $item->quantity; ?>
+                                </td>
 
-                            <!-- Product image -->
-                            <?php $image = !empty($prod->image_url) ? $prod->image_url : 'assets/default.jpg'; ?>
-                            <img class="card-img-top" src="<?php echo htmlspecialchars($image); ?>"
-                                alt="<?php echo htmlspecialchars($prod->title); ?>" />
+                                <td>
+                                    <?php echo $item->productPrice; ?>
+                                </td>
 
+                                <td>
+                                    <?php echo $item->rowPrice; ?>
+                                </td>
+                                <td>
+                                    <a href="javascript:addToCart(<?php echo $item->productId; ?>, true)"
+                                        class="btn btn-info">PLUS JS</a>
 
-                            <!-- Product details-->
-                            <div class="card-body p-4">
-                                <div class="text-center">
-                                    <h5 class="fw-bolder"><?php echo $prod->title; ?></h5>
-                                    $<?php echo $prod->price; ?>.00
-                                </div>
-                            </div>
-
-                            <!-- Product actions-->
-                            <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
-                                <div class="text-center">
-                                    <a class="btn btn-outline-dark mt-auto"
-                                        href="/cart.php?productId=<?php echo $prod->id; ?>">
-                                        Add to cart
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                <?php } ?>
+                                    <a href="/addToCart?productId=<?php echo $item->productId ?>&fromPage=<?php echo urlencode((empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]") ?>"
+                                        class="btn btn-primary">+</a>
+                                    <a href="/removeFromCart?productId=<?php echo $item->productId ?>&fromPage=<?php echo urlencode((empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]") ?>"
+                                        class="btn btn-danger">-</a>
+                                    <a href="/removeFromCart?removeCount=<?php echo $item->quantity ?>&productId=<?php echo $item->productId ?>&fromPage=<?php echo urlencode((empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]") ?>"
+                                        class="btn btn-danger">DELETE ALL</a>
+                                </td>
+                            </tr>
+                            <?php
+                        } ?>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"></td>
+                            <td id="totalPrice"><?php echo $cart->getTotalPrice(); ?></td>
+                            <td>
+                                <a href="/checkout" class="btn btn-success">Checkout</a>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
+
         </div>
     </section>
 

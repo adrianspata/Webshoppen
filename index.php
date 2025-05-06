@@ -1,9 +1,4 @@
 <?php
-// Denna fil kommer alltid att laddas in först
-// vi ska mappa urler mot Pages
-// om url = "/admin" så visa admin.php
-// om url = "/edit" så visa edit.php
-// om url = "/" så visa index.php
 
 require_once("Utils/router.php"); // LADDAR IN ROUTER KLASSEN
 require_once("vendor/autoload.php"); // LADDA ALLA DEPENDENCIES FROM VENDOR
@@ -54,6 +49,22 @@ $router->addRoute('/user/registerThanks', function () {
 
 $router->addRoute('/search', function () {
     require_once(__DIR__ . '/Pages/search.php');
+});
+
+$router->addRoute('/api/addToCart', function () {
+    require_once(__DIR__ . '/ApiCode/cart.php');
+});
+
+$router->addRoute('/viewCart', function () {
+    require_once(__DIR__ . '/Pages/viewCart.php');
+});
+
+$router->addRoute('/addToCart', function () {
+    require_once(__DIR__ . '/Pages/addToCart.php');
+});
+
+$router->addRoute('/removeFromCart', function () { // Betyder ta bort EN 
+    require_once(__DIR__ . '/Pages/removeFromCart.php');
 });
 
 $router->dispatch();

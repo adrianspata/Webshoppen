@@ -12,6 +12,9 @@ class Product
 
     public $color;
 
+    public $image_url;
+    public $description;
+
     // ANVÄND INTE CONSTRUCTOR MED PARAMETRAR FÖR PDO KAN INTE ANROPA DEN
 }
 ;
