@@ -1,11 +1,8 @@
 <?php
-// ONCE = en gång även om det blir cirkelreferenser
-#include_once("Models/Products.php") - OK även om filen inte finns
 require_once("Models/Product.php");
 require_once("components/Footer.php");
 require_once("Models/Database.php");
 require_once("components/SingleProduct.php");
-
 
 $dbContext = new Database();
 
@@ -26,11 +23,8 @@ if ($catName == "") {
     <meta name="description" content="" />
     <meta name="author" content="" />
     <title>Shop Homepage - Start Bootstrap Template</title>
-    <!-- Favicon-->
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
-    <!-- Bootstrap icons-->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" />
-    <!-- Core theme CSS (includes Bootstrap)-->
     <link href="/css/styles.css" rel="stylesheet" />
 </head>
 
@@ -59,81 +53,81 @@ if ($catName == "") {
                             ?>
                         </ul>
                     </li>
-                    <li class="nav-item"><a class="nav-link" href="#!">Login</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#!">Create account</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/login">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/register">Create account</a></li>
                 </ul>
-                <form action="/search" method="GET">
-                    <input type="text" name="q" placeholder="Search" class="form-control">
+
+                <!-- Search -->
+                <form action="/search" method="GET" class="d-flex me-3">
+                    <input type="text" name="q" placeholder="Search" class="form-control me-2">
+                    <button type="submit" class="btn btn-outline-secondary">Search</button>
                 </form>
 
-                <form class="d-flex">
-                    <button class="btn btn-outline-dark" type="submit">
+                <!-- Cart -->
+                <div class="d-flex">
+                    <a class="btn btn-outline-dark" href="/viewCart">
                         <i class="bi-cart-fill me-1"></i>
                         Cart
                         <span class="badge bg-dark text-white ms-1 rounded-pill">0</span>
-                    </button>
-                </form>
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
-    <!-- Header-->
+
+    <!-- Header -->
     <header class="bg-dark py-5">
         <div class="container px-4 px-lg-5 my-5">
             <div class="text-center text-white">
-                <h1 class="display-4 fw-bolder"><?php echo $header; ?></h1>
+                <h1 class="display-4 fw-bolder"><?php echo htmlspecialchars($header); ?></h1>
             </div>
         </div>
     </header>
-    <!-- Section-->
+
+    <!-- Product Grid -->
     <section class="py-5">
         <div class="container px-4 px-lg-5 mt-5">
             <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
                 <?php
                 foreach ($dbContext->getCategoryProducts($catName) as $prod) {
+                    $imgUrl = !empty($prod->image_url) ? htmlspecialchars($prod->image_url) : '/assets/images/default.jpg';
                     ?>
                     <div class="col mb-5">
-                        <div class="card h-100">
-                            <?php if ($prod->price < 10) { ?>
-                            <?php } ?>
-                            <!-- Product image-->
-                            <img class="card-img-top" src="<?php echo htmlspecialchars($prod->image_url); ?>"
-                                alt="<?php echo htmlspecialchars($prod->name); ?>" />
-                            <!-- Product details-->
-                            <div class="card-body p-4">
-                                <div class="text-center">
-                                    <!-- Product name-->
-                                    <h5 class="fw-bolder"><?php echo $prod->title; ?></h5>
-                                    <!-- Product price-->
-                                    $<?php echo $prod->price; ?>.00
+                        <a href="/pages/productDetail.php?id=<?php echo $prod->id; ?>"
+                            class="text-decoration-none text-dark">
+                            <div class="card h-100">
+                                <!-- Product image -->
+                                <img class="card-img-top" src="<?php echo $imgUrl; ?>"
+                                    alt="<?php echo htmlspecialchars($prod->name); ?>" />
+
+                                <!-- Product details -->
+                                <div class="card-body p-4">
+                                    <div class="text-center">
+                                        <h5 class="fw-bolder"><?php echo htmlspecialchars($prod->title); ?></h5>
+                                        $<?php echo number_format($prod->price, 2); ?>
+                                    </div>
+                                </div>
+
+                                <!-- Product actions -->
+                                <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
+                                    <div class="text-center">
+                                        <span class="btn btn-outline-dark mt-auto disabled">View details</span>
+                                    </div>
                                 </div>
                             </div>
-                            <!-- Product actions-->
-                            <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
-                                <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="#">Add to cart</a>
-                                </div>
-                            </div>
-                        </div>
+                        </a>
                     </div>
                 <?php } ?>
             </div>
         </div>
-        </div>
-        </div>
     </section>
 
-
-
-
-    <!-- Footer-->
+    <!-- Footer -->
     <?php Footer(); ?>
-    <!-- Bootstrap core JS-->
+
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Core theme JS-->
     <script src="js/scripts.js"></script>
-
-
-
-
 </body>
 
 </html>

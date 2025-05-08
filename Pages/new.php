@@ -78,15 +78,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <li><a class="dropdown-item" href="#!">En cat</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item"><a class="nav-link" href="#!">Login</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#!">Create account</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/login">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/register">Create account</a></li>
                 </ul>
                 <form class="d-flex">
-                    <button class="btn btn-outline-dark" type="submit">
+                    <a class="btn btn-outline-dark" href="/viewCart">
                         <i class="bi-cart-fill me-1"></i>
                         Cart
                         <span class="badge bg-dark text-white ms-1 rounded-pill">0</span>
-                    </button>
+                        </button>
                 </form>
             </div>
         </div>

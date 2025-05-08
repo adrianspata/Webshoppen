@@ -63,27 +63,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">Kategorier</a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="#!">All Products</a></li>
+                            <li><a class="dropdown-item" href="/category">All Products</a></li>
                             <li>
                                 <hr class="dropdown-divider" />
                             </li>
                             <?php
                             foreach ($dbContext->getAllCategories() as $cat) {
-                                echo "<li><a class='dropdown-item' href='#!'>$cat</a></li>";
+                                echo "<li><a class='dropdown-item' href='/category?catname=$cat'>$cat</a></li>";
                             }
                             ?>
                         </ul>
                     </li>
-                    <li class="nav-item"><a class="nav-link" href="#!">Login</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#!">Create account</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/login">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/register">Create account</a></li>
                 </ul>
-                <form class="d-flex">
-                    <button class="btn btn-outline-dark" type="submit">
+                <div class="d-flex">
+                    <a class="btn btn-outline-dark" href="/viewCart">
                         <i class="bi-cart-fill me-1"></i>
                         Cart
                         <span class="badge bg-dark text-white ms-1 rounded-pill">0</span>
-                    </button>
-                </form>
+                    </a>
+                </div>
+
             </div>
         </div>
     </nav>
