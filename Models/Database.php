@@ -4,29 +4,16 @@ require_once(__DIR__ . '/UserDatabase.php');
 require_once(__DIR__ . '/../vendor/autoload.php');
 require_once(__DIR__ . '/Product.php');
 
-// Hur kan man strukturera klasser
-// Hir kan man struktirera filer? Folders + subfolders
-// NAMESPACES       
-
-// LÄS IN ALLA  .env VARIABLER till $_ENV i PHP
-
-
 
 class Database
 {
-    public $pdo; // PDO är PHP Data Object - en klass som finns i PHP för att kommunicera med databaser
-    // I $pdo finns nu funktioner (dvs metoder!) som kan användas för att kommunicera med databasen
+    public $pdo;
 
     private $usersDatabase;
     function getUsersDatabase()
     {
         return $this->usersDatabase;
     }
-
-
-    // Note to Stefan STATIC så inte initieras varje gång
-
-    // SKILJ PÅ CONFIGURATION OCH KOD
 
     function __construct()
     {
@@ -36,7 +23,7 @@ class Database
         $pass = $_ENV['PASSWORD'];
         $port = $_ENV['PORT'];
 
-        $dsn = "mysql:host=$host:$port;dbname=$db"; // connection string
+        $dsn = "mysql:host=$host:$port;dbname=$db";
         $this->pdo = new PDO($dsn, $user, $pass);
         $this->initDatabase();
         $this->modifyDatabase();
@@ -51,7 +38,7 @@ class Database
         $query = $this->pdo->prepare("SELECT * FROM Products WHERE title = :title");
         $query->execute(['title' => $title]);
         if ($query->rowCount() == 0) {
-            $image_url = '/assets/images/default.jpg'; // lägg till detta
+            $image_url = '/assets/images/default.jpg';
             $this->insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor, $image_url);
         }
     }
@@ -149,7 +136,7 @@ class Database
     function insertProduct($title, $stockLevel, $price, $categoryName, $popularityFactor, $image_url = null)
     {
         if (empty($image_url)) {
-            $image_url = '/assets/images/default.jpg'; // 🔁 sätt standardbild om ingen bild anges
+            $image_url = '/assets/images/default.jpg';
         }
 
         $sql = "INSERT INTO Products (title, price, stockLevel, categoryName, popularityFactor, image_url)
@@ -172,7 +159,7 @@ class Database
 
     function searchProducts($q, $sortCol, $sortOrder, $pageNo, $pageSize = 10)
     { // $q = oo
-        if (!in_array($sortCol, ["title", "price"])) { // title123312132312321
+        if (!in_array($sortCol, ["title", "price"])) {
             $sortCol = "title";
         }
         if (!in_array($sortOrder, ["asc", "desc"])) {
@@ -190,38 +177,19 @@ class Database
         //$sqlProducts =   $sqlProducts . " LIMIT $offset, $pageSize"; // LIMIT 0, 10
         $sqlProducts .= " LIMIT $offset, $pageSize"; // LIMIT 0, 10
 
-        $query = $this->pdo->prepare($sqlProducts); // Products är TABELL
+        $query = $this->pdo->prepare($sqlProducts);
         $query->execute(['q' => "%$q%"]);
-        $data = $query->fetchAll(PDO::FETCH_CLASS, 'Product'); // $data  innehåller alla produkter som matchar sökningen
+        $data = $query->fetchAll(PDO::FETCH_CLASS, 'Product');
 
 
-        $query = $this->pdo->prepare($sqlCount); // Products är TABELL
+        $query = $this->pdo->prepare($sqlCount);
         $query->execute(['q' => "%$q%"]);
-        $num_pages = $query->fetchColumn();   // $num_pages  innehåller antalet sidor som finns i databasen
+        $num_pages = $query->fetchColumn();
 
         // arrayen["data"] istf // arrayen[0]
-        return ["data" => $data, "num_pages" => $num_pages]; // returnerar en array med två element: $data och $num_pages
+        return ["data" => $data, "num_pages" => $num_pages];
     }
 
-    // Vad är en array?
-    // en array är en samling av värden
-    // värdena når vi genom indexnummer 
-    // $players[0] 
-    // $players[1] 
-
-    // Vad är en associativ array? (dictionaries i Python, maps)
-    // en associativ array är en samling av värden
-    // värdena når vi genom NAMN (keys) 
-    // $players['forward'] 
-    // $players['goalie'] 
-
-
-    // $result = $this->searchProducts($q,$sortCol, $sortOrder,$pageNo,$pageSize); // $result är en array med två element: $data och $num_pages
-    // $data = $result[0]; // $data innehåller alla produkter som matchar sökningen    
-    // $num_pages = $result[1]; // $num_pages innehåller antalet sidor som finns i databasen
-
-
-    //function getAllProducts($sortCol, $sortOrder){
     function getAllProducts($sortCol = "id", $sortOrder = "asc")
     {
         if (!in_array($sortCol, ["id", "categoryName", "title", "price", "stockLevel"])) {
@@ -231,21 +199,20 @@ class Database
             $sortOrder = "asc";
         }
 
-        // SELECT * FROM Products ORDER BY  id asc
-        $query = $this->pdo->query("SELECT * FROM Products ORDER BY $sortCol $sortOrder"); // Products är TABELL 
-        return $query->fetchAll(PDO::FETCH_CLASS, 'Product'); // Product är PHP Klass
+        $query = $this->pdo->query("SELECT * FROM Products ORDER BY $sortCol $sortOrder");
+        return $query->fetchAll(PDO::FETCH_CLASS, 'Product');
     }
     function getPopularProducts()
     {
-        $query = $this->pdo->query("SELECT * FROM Products ORDER BY popularityFactor DESC LIMIT 10"); // Products är TABELL 
-        return $query->fetchAll(PDO::FETCH_CLASS, 'Product'); // Product är PHP Klass
+        $query = $this->pdo->query("SELECT * FROM Products ORDER BY popularityFactor DESC LIMIT 10");
+        return $query->fetchAll(PDO::FETCH_CLASS, 'Product');
     }
 
     function getCategoryProducts($catName)
     {
         if ($catName == "") {
-            $query = $this->pdo->query("SELECT * FROM Products"); // Products är TABELL 
-            return $query->fetchAll(PDO::FETCH_CLASS, 'Product'); // Product är PHP Klass
+            $query = $this->pdo->query("SELECT * FROM Products");
+            return $query->fetchAll(PDO::FETCH_CLASS, 'Product');
         }
         $query = $this->pdo->prepare("SELECT * FROM Products WHERE categoryName = :categoryName");
         $query->execute(['categoryName' => $catName]);
@@ -253,7 +220,6 @@ class Database
     }
     function getAllCategories()
     {
-        // SELECT DISTINCT categoryName FROM Products
         $data = $this->pdo->query('SELECT DISTINCT categoryName FROM Products')->fetchAll(PDO::FETCH_COLUMN);
         return $data;
     }
@@ -275,7 +241,6 @@ class Database
         $query = $this->pdo->prepare($queryStr);
         $query->execute($params);
 
-        // ✅ returnera resultatet som CartItem-objekt
         return $query->fetchAll(PDO::FETCH_CLASS, 'CartItem');
     }
 

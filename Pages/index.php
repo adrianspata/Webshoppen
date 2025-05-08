@@ -1,9 +1,4 @@
 <?php
-// ONCE = en gång även om det blir cirkelreferenser
-#include_once("Models/Products.php") - OK även om filen inte finns
-
-
-
 
 require_once("Models/Product.php");
 require_once("components/Footer.php");
@@ -24,16 +19,6 @@ if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()) {
 $session_id = session_id();
 
 $cart = new Cart($dbContext, $session_id, $userId);
-
-
-// POPULÄRA PRODUKTER - product 1 to many reviews text+betyg
-// Vi gör enkelt : i products skapar vi PopularityFactor som är en int mellan 1-100
-// ju högre ju mer populär
-
-// På startsidan så visas de 10 mest populära produkterna
-// Skapa en  getPopularProducts() i Database.php som returnerar en array av produkter
-// select * from products order by popularityFactor desc limit 10	
-
 ?>
 
 <!DOCTYPE html>
@@ -59,15 +44,16 @@ $cart = new Cart($dbContext, $session_id, $userId);
         <div class="container px-4 px-lg-5">
             <a class="navbar-brand" href="/">Fruit Life</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-                aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+                data-bs-target="#navbarSupportedContent"><span class="navbar-toggler-icon"></span></button>
+
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <!-- Left side -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">Kategorier</a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="/category">All Products</a></li>
+                            data-bs-toggle="dropdown">Kategorier</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/category">All</a></li>
                             <li>
                                 <hr class="dropdown-divider" />
                             </li>
@@ -78,35 +64,37 @@ $cart = new Cart($dbContext, $session_id, $userId);
                             ?>
                         </ul>
                     </li>
-                    <?php
-                    if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()) { ?>
+                    <?php if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()) { ?>
                         <li class="nav-item"><a class="nav-link" href="/user/logout">Logout</a></li>
                     <?php } else { ?>
                         <li class="nav-item"><a class="nav-link" href="/user/login">Login</a></li>
                         <li class="nav-item"><a class="nav-link" href="/user/register">Create account</a></li>
-                        <?php
-                    }
-                    ?>
+                    <?php } ?>
                 </ul>
 
-                <form action="/search" method="GET">
-                    <input type="text" name="q" placeholder="Search" class="form-control">
+                <!-- Search form -->
+                <form action="/search" method="GET" class="d-flex me-3">
+                    <input type="text" name="q" placeholder="Search" class="form-control me-2">
+                    <button type="submit" class="btn btn-outline-secondary">Search</button>
                 </form>
 
-
+                <!-- Inloggad användare -->
                 <?php if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()) { ?>
-                    Welcome: <?php echo $dbContext->getUsersDatabase()->getAuth()->getUsername() ?>
+                    <span class="me-3">Welcome:
+                        <?php echo htmlspecialchars($dbContext->getUsersDatabase()->getAuth()->getUsername()); ?></span>
                 <?php } ?>
-                <form class="d-flex">
+
+                <!-- Cart -->
+                <div class="d-flex">
                     <a class="btn btn-outline-dark" href="/viewCart">
                         <i class="bi-cart-fill me-1"></i>
                         Cart
-                        <span id="cartCount" class="badge bg-dark text-white ms-1 rounded-pill">
-                            <?php echo $cart->getItemsCount() ?></span>
+                        <span class="badge bg-dark text-white ms-1 rounded-pill">
+                            <?php echo $cart->getItemsCount(); ?>
+                        </span>
                     </a>
-                </form>
-            </div>
-        </div>
+                </div>
+
     </nav>
     <!-- Header-->
     <header class="bg-dark py-5">
