@@ -1,10 +1,4 @@
 <?php
-// ONCE = en gång även om det blir cirkelreferenser
-#include_once("Models/Products.php") - OK även om filen inte finns
-
-
-
-
 require_once("Models/Product.php");
 require_once("components/Footer.php");
 require_once("Models/Database.php");
@@ -14,27 +8,14 @@ require_once("components/SingleProduct.php");
 $dbContext = new Database();
 
 $userId = null;
-$session_id = null;
+$session_id = session_id();
 
 if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()) {
     $userId = $dbContext->getUsersDatabase()->getAuth()->getUserId();
 }
-//$cart = $dbContext->getCartByUser($userId);
-$session_id = session_id();
 
 $cart = new Cart($dbContext, $session_id, $userId);
-
-
-
-
-// POPULÄRA PRODUKTER - product 1 to many reviews text+betyg
-// Vi gör enkelt : i products skapar vi PopularityFactor som är en int mellan 1-100
-// ju högre ju mer populär
-
-// På startsidan så visas de 10 mest populära produkterna
-// Skapa en  getPopularProducts() i Database.php som returnerar en array av produkter
-// select * from products order by popularityFactor desc limit 10	
-
+$cartCount = $cart->getItemsCount();
 ?>
 
 <!DOCTYPE html>
@@ -43,27 +24,23 @@ $cart = new Cart($dbContext, $session_id, $userId);
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="description" content="" />
-    <meta name="author" content="" />
-    <title>Shop Homepage - Start Bootstrap Template</title>
-    <!-- Favicon-->
+    <title>Your Cart - Fruit Life</title>
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
-    <!-- Bootstrap icons-->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" />
-    <!-- Core theme CSS (includes Bootstrap)-->
     <link href="/css/styles.css" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/19719cda05.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
-    <!-- Navigation-->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container px-4 px-lg-5">
             <a class="navbar-brand" href="/">Fruit Life</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarSupportedContent"><span class="navbar-toggler-icon"></span></button>
+                data-bs-target="#navbarSupportedContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <!-- Left side -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button"
@@ -73,45 +50,41 @@ $cart = new Cart($dbContext, $session_id, $userId);
                             <li>
                                 <hr class="dropdown-divider" />
                             </li>
-                            <?php
-                            foreach ($dbContext->getAllCategories() as $cat) {
-                                echo "<li><a class='dropdown-item' href='/category?catname=$cat'>$cat</a></li>";
-                            }
-                            ?>
+                            <?php foreach ($dbContext->getAllCategories() as $cat): ?>
+                                <li><a class="dropdown-item"
+                                        href="/category?catname=<?php echo $cat ?>"><?php echo $cat ?></a></li>
+                            <?php endforeach; ?>
                         </ul>
                     </li>
-                    <?php if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()) { ?>
+                    <?php if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()): ?>
                         <li class="nav-item"><a class="nav-link" href="/user/logout">Logout</a></li>
-                    <?php } else { ?>
+                    <?php else: ?>
                         <li class="nav-item"><a class="nav-link" href="/user/login">Login</a></li>
                         <li class="nav-item"><a class="nav-link" href="/user/register">Create account</a></li>
-                    <?php } ?>
+                    <?php endif; ?>
                 </ul>
 
-                <!-- Search form -->
                 <form action="/search" method="GET" class="d-flex me-3">
                     <input type="text" name="q" placeholder="Search" class="form-control me-2">
                     <button type="submit" class="btn btn-outline-secondary">Search</button>
                 </form>
 
-                <!-- Inloggad användare -->
-                <?php if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()) { ?>
+                <?php if ($dbContext->getUsersDatabase()->getAuth()->isLoggedIn()): ?>
                     <span class="me-3">Welcome:
                         <?php echo htmlspecialchars($dbContext->getUsersDatabase()->getAuth()->getUsername()); ?></span>
-                <?php } ?>
+                <?php endif; ?>
 
-                <!-- Cart -->
                 <div class="d-flex">
                     <a class="btn btn-outline-dark" href="/viewCart">
                         <i class="bi-cart-fill me-1"></i>
                         Cart
-                        <span class="badge bg-dark text-white ms-1 rounded-pill">0</span>
+                        <span class="badge bg-dark text-white ms-1 rounded-pill"><?php echo $cartCount; ?></span>
                     </a>
                 </div>
             </div>
         </div>
     </nav>
-    <!-- Header-->
+
     <header class="bg-dark py-5">
         <div class="container px-4 px-lg-5 my-5">
             <div class="text-center text-white">
@@ -119,80 +92,59 @@ $cart = new Cart($dbContext, $session_id, $userId);
             </div>
         </div>
     </header>
-    <!-- Section-->
+
     <section class="py-5">
         <div class="container px-4 px-lg-5 mt-5">
-            <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
-                <table class="table">
-                    <thead>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($cart->getItems() as $item): ?>
                         <tr>
-                            <th scope="col">Product</th>
-                            <th scope="col">Quantity</th>
-                            <th scope="col">Price</th>
-                            <th scope="col">Total Price</th>
-                            <th scope="col"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="cartItemsTable">
-                        <?php foreach ($cart->getItems() as $item) {
-                            ?>
-                            <tr>
-                                <td>
-                                    <?php echo $item->productName; ?>
-                                </td>
-                                <td>
-                                    <?php echo $item->quantity; ?>
-                                </td>
-
-                                <td>
-                                    <?php echo $item->productPrice; ?>
-                                </td>
-
-                                <td>
-                                    <?php echo $item->rowPrice; ?>
-                                </td>
-                                <td>
-
-
-                                    <a href="/addToCart?productId=<?php echo $item->productId ?>&fromPage=<?php echo urlencode((empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]") ?>"
-                                        class="btn btn-primary">+</a>
-                                    <a href="/removeFromCart?productId=<?php echo $item->productId ?>&fromPage=<?php echo urlencode((empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]") ?>"
-                                        class="btn btn-danger">-</a>
-                                    <a href="/removeFromCart?removeCount=<?php echo $item->quantity ?>&productId=<?php echo $item->productId ?>&fromPage=<?php echo urlencode((empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]") ?>"
-                                        class="btn btn-danger">DELETE ALL</a>
-                                </td>
-                            </tr>
-                            <?php
-                        } ?>
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="3"></td>
-                            <td id="totalPrice"><?php echo $cart->getTotalPrice(); ?></td>
+                            <td><?php echo $item->productName; ?></td>
+                            <td><?php echo $item->quantity; ?></td>
+                            <td><?php echo $item->productPrice; ?></td>
+                            <td><?php echo $item->rowPrice; ?></td>
                             <td>
-                                <a href="/checkout" class="btn btn-success">Checkout</a>
+                                <?php $returnUrl = urlencode("http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"); ?>
+                                <a href="/addToCart?productId=<?php echo $item->productId ?>&fromPage=<?php echo $returnUrl ?>"
+                                    class="btn btn-primary">
+                                    <i class="fa-solid fa-plus"></i>
+                                </a>
+                                <a href="/removeFromCart?productId=<?php echo $item->productId ?>&fromPage=<?php echo $returnUrl ?>"
+                                    class="btn btn-danger">
+                                    <i class="fa-solid fa-minus"></i>
+                                </a>
+                                <a href="/removeFromCart?removeCount=<?php echo $item->quantity ?>&productId=<?php echo $item->productId ?>&fromPage=<?php echo $returnUrl ?>"
+                                    class="btn btn-warning" title="Delete all">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+
                             </td>
                         </tr>
-                    </tfoot>
-                </table>
-            </div>
-
+                    <?php endforeach; ?>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3"></td>
+                        <td><?php echo $cart->getTotalPrice(); ?></td>
+                        <td><a href="/checkout" class="btn btn-success">Checkout</a></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </section>
 
-
-
-
-    <!-- Footer-->
     <?php Footer(); ?>
-    <!-- Bootstrap core JS-->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Core theme JS-->
     <script src="/scripts/cart.js"></script>
-
-
-
-
 </body>
 
 </html>

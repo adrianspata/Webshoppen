@@ -1,5 +1,4 @@
 <?php
-
 require_once __DIR__ . '/CartItem.php';
 
 class Cart
@@ -15,7 +14,6 @@ class Cart
         $this->session_id = $session_id;
         $this->userId = $userId;
 
-        // Hämta produkter från databasen
         $this->cartItems = $this->dbContext->getCartItems($session_id, $userId);
     }
 
@@ -33,8 +31,8 @@ class Cart
             $item = new CartItem();
             $item->productId = $productId;
             $item->quantity = $quantity;
-            $item->productName = ""; // kan sättas via DB
-            $item->productPrice = 0; // sätts via JOIN i getCartItems
+            $item->productName = "";
+            $item->productPrice = 0;
             $item->rowPrice = 0;
             array_push($this->cartItems, $item);
         } else {
@@ -61,6 +59,12 @@ class Cart
         } else {
             $this->dbContext->addOrUpdateCartItem($this->userId, $this->session_id, $productId, $item->quantity);
         }
+    }
+
+    public function clearCart()
+    {
+        $this->dbContext->deleteAllCartItems($this->userId, $this->session_id);
+        $this->cartItems = [];
     }
 
     public function getCartItem($productId)
@@ -94,10 +98,5 @@ class Cart
     public function getItems()
     {
         return $this->cartItems;
-    }
-
-    public function clearCart()
-    {
-        $this->cartItems = [];
     }
 }
